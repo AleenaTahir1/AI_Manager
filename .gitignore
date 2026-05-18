@@ -5,6 +5,10 @@ dist-ssr/
 *.local
 .bun
 
+# TypeScript build info
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
 # Editors / OS
 .vscode/
 .idea/
