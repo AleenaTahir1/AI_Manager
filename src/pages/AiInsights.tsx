@@ -93,7 +93,7 @@ export function AiInsights(props: {
         <Card className="flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--color-accent)]" />
+              <Sparkles className="h-4 w-4 text-[var(--color-amber)]" />
               <h2 className="text-sm font-medium text-[var(--color-fg-strong)]">
                 Why is this process running?
               </h2>
