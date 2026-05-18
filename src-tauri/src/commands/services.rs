@@ -22,7 +22,7 @@ mod imp {
         SERVICE_WIN32,
     };
     use windows_service::service::{
-        ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType, ServiceState,
+        ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType,
     };
     use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
@@ -81,18 +81,6 @@ mod imp {
             ServiceStartType::Disabled => "Disabled",
             ServiceStartType::BootStart => "Boot",
             ServiceStartType::SystemStart => "System",
-        }
-    }
-
-    fn service_state_str(s: ServiceState) -> &'static str {
-        match s {
-            ServiceState::Stopped => "Stopped",
-            ServiceState::StartPending => "Start Pending",
-            ServiceState::StopPending => "Stop Pending",
-            ServiceState::Running => "Running",
-            ServiceState::ContinuePending => "Continue Pending",
-            ServiceState::PausePending => "Pause Pending",
-            ServiceState::Paused => "Paused",
         }
     }
 
@@ -227,8 +215,6 @@ mod imp {
             "set-disabled" => set_start_type(&manager, name, ServiceStartType::Disabled)?,
             _ => return Err(format!("unknown action {action}")),
         }
-        // Silence unused warnings if helpers below stay unused.
-        let _ = service_state_str(ServiceState::Stopped);
         Ok(())
     }
 

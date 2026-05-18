@@ -12,6 +12,7 @@ tsconfig.tsbuildinfo
 # Editors / OS
 .vscode/
 .idea/
+.claude/
 .DS_Store
 Thumbs.db
 *.swp
