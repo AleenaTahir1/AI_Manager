@@ -1,6 +1,6 @@
 [package]
 name = "ai-task-manager"
-version = "0.1.2"
+version = "0.1.3"
 description = "AI Task Manager — a faster, smarter Windows Task Manager."
 authors = ["Razee4315"]
 edition = "2021"
