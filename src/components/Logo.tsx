@@ -1,4 +1,4 @@
-import logoUrl from "../assets/ai_task_manager_logo.png";
+import logoUrl from "../assets/icon.png";
 
 export function Logo({
   size = 24,

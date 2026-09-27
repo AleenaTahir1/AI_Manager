@@ -2,76 +2,49 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  check-and-bump:
-    runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.bump.outputs.should_release }}
-      version: ${{ steps.bump.outputs.version }}
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'macos-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Check for changes and bump version
-        id: bump
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
-          CURRENT_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
-          echo "Current version: $CURRENT_VERSION"
-
-          if git tag -l "v$CURRENT_VERSION" | grep -q "v$CURRENT_VERSION"; then
-            echo "Tag v$CURRENT_VERSION already exists"
-            COMMITS_SINCE=$(git rev-list "v$CURRENT_VERSION"..HEAD --count 2>/dev/null || echo "0")
-            echo "Commits since v$CURRENT_VERSION: $COMMITS_SINCE"
-
-            if [ "$COMMITS_SINCE" -eq "0" ]; then
-              echo "No new commits since last release — skipping"
-              echo "should_release=false" >> $GITHUB_OUTPUT
-              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-            NEW_PATCH=$((PATCH + 1))
-            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-            echo "Bumping version: $CURRENT_VERSION -> $NEW_VERSION"
-
-            jq --arg v "$NEW_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
-            jq --arg v "$NEW_VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
-            sed -i "s/^version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" src-tauri/Cargo.toml
-
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src-tauri/tauri.conf.json package.json src-tauri/Cargo.toml
-            git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-            git push
-
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "Tag v$CURRENT_VERSION does not exist — first release"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          fi
-
-  release:
-    needs: check-and-bump
-    if: needs.check-and-bump.outputs.should_release == 'true'
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout repository (with bumped version)
-        uses: actions/checkout@v4
-        with:
-          ref: main
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -95,15 +68,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tauriScript: bun run tauri
+          args: ${{ matrix.args }}
           tagName: v__VERSION__
           releaseName: 'AI Task Manager v__VERSION__'
           releaseBody: |
             ## AI Task Manager v__VERSION__
 
-            A faster, smarter Windows Task Manager — process insight, performance graphs, startup and service management, with on-demand AI explanations.
+            A faster, smarter Task Manager — process insight, performance graphs, startup and service management, and Kali-style system monitor with on-demand AI explanations.
 
-            ### Installation
-            - **`.msi`** — Standard Windows installer (recommended)
-            - **`.exe`** — NSIS installer
+            ### Platform Assets
+            - **Windows**: `.msi` installer / `.exe` setup
+            - **Linux**: `.deb` / `.AppImage`
+            - **macOS**: `.dmg` / `.app`
           releaseDraft: false
           prerelease: false

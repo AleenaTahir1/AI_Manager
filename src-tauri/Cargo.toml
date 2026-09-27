@@ -1,6 +1,6 @@
 [package]
 name = "ai-task-manager"
-version = "0.1.3"
+version = "0.2.1"
 description = "AI Task Manager — a faster, smarter Windows Task Manager."
 authors = ["Razee4315"]
 edition = "2021"
@@ -31,6 +31,10 @@ thiserror = "2"
 sha2 = "0.10"
 hex = "0.4"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+# Feature 3: Historical Metrics Storage
+rusqlite = { version = "0.31", features = ["bundled"] }
+# Feature 4: App data path resolution
+dirs-next = "2"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.7"
@@ -38,6 +42,10 @@ winreg = "0.55"
 windows = { version = "0.58", features = [
   "Win32_Foundation",
   "Win32_System_Services",
+  "Win32_UI_WindowsAndMessaging",
+  # Feature 2: Network Connections — IP Helper API
+  "Win32_NetworkManagement_IpHelper",
+  "Win32_Networking_WinSock",
 ] }
 
 [profile.release]

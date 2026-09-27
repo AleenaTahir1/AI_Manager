@@ -1,0 +1,8 @@
+{
+  "name": "AI Task Manager System Monitor",
+  "description": "Kali-style compact live system resource monitor panel (CPU per-core, RAM sparkline, Network rate)",
+  "uuid": "ai-task-manager-monitor@razee4315.github.com",
+  "shell-version": ["45", "46", "47"],
+  "version": 1,
+  "url": "https://github.com/Razee4315/AI_Manager"
+}

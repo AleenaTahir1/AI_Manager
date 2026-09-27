@@ -14,6 +14,9 @@ export type ProcessRow = {
   run_time_s: number;
   user: string | null;
   threat: "green" | "yellow" | "red" | string;
+  // Feature: Security Risk Analysis
+  risk_score: number;
+  risk_reasons: string[];
 };
 
 export type ProcessDetail = {
@@ -32,6 +35,8 @@ export type ProcessDetail = {
   start_time_s: number;
   user: string | null;
   threat: string;
+  risk_score: number;
+  risk_reasons: string[];
 };
 
 export type MetricSample = {
@@ -82,10 +87,12 @@ export type StartupEntry = {
   enabled: boolean;
 };
 
+// Feature: AI Provider Expansion
 export type AiConfig = {
   api_key: string;
   model?: string;
   base_url?: string;
+  provider?: string;
 };
 
 export type AiReply = {
@@ -93,9 +100,31 @@ export type AiReply = {
   cached: boolean;
 };
 
+// Feature: Network Connections Panel
+export type NetConnection = {
+  pid: number;
+  local_addr: string;
+  remote_addr: string;
+  protocol: string;
+  state: string;
+};
+
+// Feature: Historical Metrics Storage
+export type MetricRange = "1h" | "24h" | "7d";
+
+// Feature: System Monitor Bar
+export type SystemMonitorMetrics = {
+  cpu_cores: number[];
+  ram_percent: number;
+  ram_history: number[];
+  net_rx_bps: number;
+  net_tx_bps: number;
+};
+
 export const ipc = {
   listProcesses: () => invoke<ProcessRow[]>("list_processes"),
   killProcess: (pid: number) => invoke<boolean>("kill_process", { pid }),
+  killProcessTree: (pid: number) => invoke<number>("kill_process_tree", { pid }),
   processDetail: (pid: number) =>
     invoke<ProcessDetail | null>("process_detail", { pid }),
 
@@ -114,4 +143,36 @@ export const ipc = {
     invoke<AiReply>("explain_process", { config, input }),
   explainSystem: (config: AiConfig, input: Record<string, unknown>) =>
     invoke<AiReply>("explain_system", { config, input }),
+
+  // Feature: Network Connections
+  listConnections: (pid?: number) =>
+    invoke<NetConnection[]>("list_connections", { pid: pid ?? null }),
+
+  // Feature: Historical Metrics Storage
+  queryMetricHistory: (range: MetricRange) =>
+    invoke<MetricSample[]>("query_metric_history", { range }),
+
+  // Feature: System Tray
+  setAutostart: (enabled: boolean) =>
+    invoke<void>("set_autostart", { enabled }),
+
+  // Feature: System Monitor Bar
+  systemMonitorMetrics: () =>
+    invoke<SystemMonitorMetrics>("system_monitor_metrics"),
+  toggleSystemMonitorWindow: (
+    enable: boolean,
+    positionMode?: string,
+    offsetRight?: number
+  ) =>
+    invoke<void>("toggle_system_monitor_window", {
+      enable,
+      positionMode: positionMode ?? null,
+      offsetRight: offsetRight ?? null,
+    }),
+  repositionSystemMonitor: (positionMode: string, offsetRight?: number) =>
+    invoke<void>("reposition_system_monitor", {
+      positionMode,
+      offsetRight: offsetRight ?? null,
+    }),
+  focusMainWindow: () => invoke<void>("focus_main_window"),
 };

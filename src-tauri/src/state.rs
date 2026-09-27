@@ -6,6 +6,8 @@ use parking_lot::RwLock;
 use serde::Serialize;
 use sysinfo::{Disks, Networks, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
 
+use crate::db::MetricsDb;
+
 pub const HISTORY_SECONDS: usize = 60;
 
 #[derive(Debug, Clone, Serialize)]
@@ -48,10 +50,12 @@ pub struct AppState {
     pub networks: RwLock<Networks>,
     pub history: RwLock<MetricsHistory>,
     pub ai_cache: RwLock<std::collections::HashMap<String, String>>,
+    /// Feature: Historical Metrics Storage — SQLite database.
+    pub db: MetricsDb,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(db: MetricsDb) -> Self {
         let sys = System::new_with_specifics(
             RefreshKind::nothing()
                 .with_cpu(sysinfo::CpuRefreshKind::everything())
@@ -64,6 +68,7 @@ impl AppState {
             networks: RwLock::new(Networks::new_with_refreshed_list()),
             history: RwLock::new(MetricsHistory::new()),
             ai_cache: RwLock::new(std::collections::HashMap::new()),
+            db,
         }
     }
 }
@@ -82,6 +87,9 @@ pub fn metrics_sampler_loop(state: Arc<AppState>) {
         sys.refresh_processes(ProcessesToUpdate::All, true);
     }
     std::thread::sleep(Duration::from_millis(500));
+
+    // Counter to trigger SQLite writes every 5 seconds.
+    let mut db_tick: u8 = 0;
 
     loop {
         let started = std::time::Instant::now();
@@ -139,6 +147,19 @@ pub fn metrics_sampler_loop(state: Arc<AppState>) {
                 net_tx_bps: net_tx,
             }
         };
+
+        // Feature: Historical Metrics Storage — write to SQLite every 5 seconds.
+        db_tick = db_tick.wrapping_add(1);
+        if db_tick % 5 == 0 {
+            let _ = state.db.insert_sample(
+                sample.ts_ms,
+                sample.cpu_total,
+                sample.mem_used,
+                sample.mem_total,
+                sample.disk_read_bps.saturating_add(sample.disk_write_bps),
+                sample.net_rx_bps.saturating_add(sample.net_tx_bps),
+            );
+        }
 
         state.history.write().push(sample);
 

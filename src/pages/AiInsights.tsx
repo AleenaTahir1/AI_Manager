@@ -163,7 +163,7 @@ export function AiInsights(props: {
         {!hasKey ? (
           <Card className="col-span-2 border-[var(--color-warn)] p-4">
             <div className="text-sm text-[var(--color-warn)]">
-              Add your OpenRouter API key in Settings to enable AI features.
+              Add your API key in Settings to enable AI features.
             </div>
           </Card>
         ) : null}
